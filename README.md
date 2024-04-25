@@ -1,2 +1,2 @@
 # fnafML
-Prototyping an ML training environment for Five Night's at Freddy's
+Prototyping an ML training environment for Five Nights at Freddy's
