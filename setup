@@ -1,0 +1,121 @@
+INTRO 
+    ref: other bots on youtube.
+    difference: those are programmed with a strategy, we will use ML to learn
+    the strategy. 
+
+    why fnaf?
+    single player - low potential for abuse.
+    simple 2d interface
+    old - 
+     well supported on linux (platinum on protondb)
+     not resource intensive
+
+1. Install steam via flatpak
+ 1.1 set up alias for steam
+2. Turn on Compatability 
+3. Install FNAF 
+4. Install lutris via flatpak 
+ 4.1 set up alias for lutris
+5. Add fnaf to Lutris: add locally installed game, runner: wine
+5.1 Fix banner (optional)
+    6. set options in lutris
+    6.1 run in windowed mode (optional), game opt -> arg -> /NOF
+    6.2 System ops -> display -> FPS Counter NO, use the mangohud config
+    6.3 System Opts -> game execution -> cmd prefix -> MANGOHUD_CONFIG=fps_only
+  (salt to taste)
+7. Set up fnaf alias
+
+TODO: Observation Space (Gymnasium) setup
+
+
+- Get frames
+ xvfb + mss
+ Xephyr + mss
+
+xvfb-run starts the virtual server.
+need to capture and set DISPLAY and XAUTHORITY env vars correctly in order to
+take ss with mss. 
+e.g. DISPLAY=:99 XAUTHORITY=/tmp/xvfb.######/Xauthority mss
+Xephyr -br -ac -noreset -screen 1280x720x24 :99 & DISPLAY=:99 flatpak run net.lutris.Lutris lutris:rungame/fnaf
+
+install python3-pynput to get mouse positions for clicks.
+run a lil python script to record clicks.
+
+Mouse clicked at (185, 418) NEW GAME
+Mouse clicked at (260, 498) Continue
+Mouse clicked at (59, 419)  L LIGHT
+Mouse clicked at (59, 418)  L LIGHT
+Mouse clicked at (57, 334)  L DOOR
+Mouse clicked at (57, 334)  L DOOR
+Mouse clicked at (1217, 439)R Light
+Mouse clicked at (1217, 439)R Light
+Mouse clicked at (1219, 364)R Door
+Mouse clicked at (1219, 363)R Door
+Mouse clicked at (571, 677)Drag to open screen
+Mouse clicked at (571, 677)Drag to open screen
+Mouse clicked at (993, 358) Cam 1a
+Mouse clicked at (966, 410) cam 1b
+Mouse clicked at (930, 491) cam 1c
+Mouse clicked at (991, 608) cam 2a
+Mouse clicked at (976, 645) cam 2b
+Mouse clicked at (901, 592) cam 3
+Mouse clicked at (1083, 601) cam 4a
+Mouse clicked at (1084, 647) cam 4b
+Mouse clicked at (858, 437) cam 5
+Mouse clicked at (1185, 570) cam 6
+Mouse clicked at (1191, 437) cam 7
+Mouse clicked at (573, 668) drag screen
+
+Set up action space.
+Couldn't make toggle light a single action because if the screen needed to move
+it missed the click.
+
+
+# TODO: Get observations.
+     https://python-mss.readthedocs.io/index.html
+    - Image processing to get state.
+        State TBD
+        Reward a(time passed) - b(battery left) + c(nights complete) ?
+    - Audio capture and processing?
+
+MAIN MENU - Complete (until benchmarking)
+
+In all tests we MSE to measure similarity.
+We tried:
+
+1) background removal. 100% accurate, but .3 s/frame, very slow. 
+
+2) template matching. Much faster (.02-.04 s/frame). Average 10 frames to
+generate reference, check for template match > .2. 100% accuracy (no averaging,
+0 frames matched in night 1 video, all 16k frames matched on menu screen).
+(We thought it was false posing on the lore screen, but it was actually bc the
+video had a few frames at the begining of the fade from the menu to the lore
+screen).
+
+3) Morphological transform (?) "threshold" didn't work very well: maybe wasn't
+using a good reference.
+No averaging: checked all three kernels. Using the averaged ref from 2)
+gives better matching than a raw reference. Best match (still < 10%) is with no
+bg. 
+5 frame avg: checked all three kernels. mathces 50-70% of time with no bg ref.
+avg ref gives 50-70% match. "mm.png.bk" ref gives no matches. raw ref gives no
+matches. 
+
+4) FFT + freq domain filters - No luck, didn't check mse because couldn't filter
+well enough.
+
+In 1 and 2 (all of them really) - accuracy was highly dependent on the reference
+provided. Once a good reference was found, the accuracy greatly improved.
+
+GAME MENU, CAM MENU, TRANSITION SCREEN, LORE SCREEN, LOADING SCREEN -
+All reused the match_template function. Just different cropping of the screen.
+
+# TODO: need to decide what to include in a state
+# TODO: Id if Bonnie or Chica is at a door.
+# TODO: Id animatronics on cams. 
+# TODO: Get power, utilization, and time.
+
+
+
+
+
